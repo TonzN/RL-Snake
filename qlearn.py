@@ -80,8 +80,12 @@ class Agent:
      #   print("\n TARGET VALUES", target[action.argmax()], "\n")
         model.fit(oldstate, target, epochs = 1, verbose = 0)
 
-    def longTrain(self):
-        oldstate, newstate, reward, action, running = zip(*memory)
+     def longTrain(self):
+        sample = memory
+        if len(memory) > 400:
+            sample = random.sample(memory, 400)
+
+        oldstate, newstate, reward, action, running = zip(*sample)
         
         pred = []
         target = []
@@ -98,8 +102,9 @@ class Agent:
                 newQ = reward[i] + self.gamma * np.max(tf.nn.softmax(model(newstate[i])).numpy())
            
             target[i][0][action[i].argmax()] = newQ
-
-        model.fit(np.array(arr), np.array(target), epochs = 1)
+      #  print(np.array(target).shape, np.array(arr).shape)
+        model.fit(np.array(arr), np.array(target), epochs = 8, verbose = 0)
+        model.evaluate(np.array(arr),  np.array(target), verbose=2)
 
     def train(self, screen):
         state = self.getState()
