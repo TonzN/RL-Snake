@@ -43,7 +43,10 @@ class New():
 
         self.bodies = [] 
         for i in range(len(self.body)):
-            self.bodies.append( ui.Rect(screen, self.body[i][0], self.body[i][1], size, size, (0,255,0))) 
+            color = (0,255,0)
+            if i == 0:
+                color = (125,0,0)
+            self.bodies.append( ui.Rect(screen, self.body[i][0], self.body[i][1], size, size, color)) 
         self.score = 0
         self.screenSize = screenSize
         self.screen = screen
@@ -54,6 +57,7 @@ class New():
         self.startTime = time.time()
         self.elapsedTime = time.time()
         self.Seconds = 0
+        self.life = 200
 
     def plr_update(self):
         if self.pos[0] >= self.screenSize[0]:
@@ -69,6 +73,9 @@ class New():
                 ui.endPygame()
 
     def update(self):
+        self.life -= 1
+        if self.life <= 0:
+            return False, -10
         if self.pos[0] >= self.screenSize[0]:
             return False, -10
         if self.pos[0] <= 0-15:
@@ -79,8 +86,12 @@ class New():
             return False, -10
         for i in range(1,len(self.body)):
             if (self.pos[0] , self.pos[1]) == (self.bodies[i].pos[0], self.bodies[i].pos[1]):
-                return True, -1000
-        return True, -100
+                return False, -10
+        if self.giveReward ==  True:
+            self.life += 200
+            self.giveReward = False
+            return True, 10
+        return True, 0
 
     def move(self, screen):
         if direction == "up":
@@ -109,15 +120,8 @@ class New():
             self.bodies[i].pos[0] = self.body[i][0]
             self.bodies[i].pos[1] = self.body[i][1]
 
-        if time.time() - self.elapsedTime >= 1:
-            self.giveReward = True
-            self.Seconds = round(time.time() - self.startTime)
-
-    def hitFruit(self):
-        if self.giveReward == True:
-            self.giveReward == False
-            return 1000
-        return 0
+     
+        self.Seconds = round(time.time() - self.startTime)
 
     def rotateDir(self):
         dir = int(n_directions[direction])
@@ -147,34 +151,35 @@ class New():
             "2": "1"
             }
 
-    def lookForFruit(self, dir):
-        if self.pos[axis[self.facing[str(dir)]]] + self.size == self.fruit_position[axis[self.facing[str(dir)]]]:
-            return 1
-        return 0
+    def lookForFruit(self):
+        fruitDir = [
+            int(self.pos[0] < self.fruit.pos[0]), #right
+            int(self.pos[0] > self.fruit.pos[0]), #left
+            int(self.pos[1] < self.fruit.pos[1]), #under
+            int(self.pos[1] > self.fruit.pos[1]), #over
+        ]
+        return fruitDir
 
-    def lookForBorder(self, dir):
-    
-        if self.pos[axis[self.facing[str(dir)]]] + self.size >= self.screenSize[0]:
-            return 1
-        if self.pos[axis[self.facing[str(dir)]]] + self.size <= 0-15:
-            return 1
-        if self.pos[axis[self.facing[str(dir)]]] + self.size >= self.screenSize[1]:
-            return 1
-        if self.pos[axis[self.facing[str(dir)]]] + self.size <= 0-15:
-            return 1
-        for i in range(1,len(self.body)):
-            if (self.pos[0] + self.size, self.pos[1] + self.size) == (self.bodies[i].pos[0], self.bodies[i].pos[1]):
-                return 1
-        return 0
-        
-    def look(self, dir):
-        if self.lookForBorder(dir) == 0 and self.lookForFruit(dir) == 0:
-            return 1
-        else:
-            return 0
+    def lookForBorder(self):
+        dangers = [0,0,0]
+        for dir in range(3):
+            if self.pos[axis[self.facing[str(dir)]]] + self.size >= self.screenSize[axis[self.facing[str(dir)]]]:
+                dangers[dir] = 1
+
+            if self.pos[axis[self.facing[str(dir)]]] - self.size <= 0-15:
+                dangers[dir] = 1
+            for i in range(1,len(self.body)):
+                if direction == "right" or direction == "down":
+                    if self.pos[axis[self.facing[str(dir)]]] + self.size == self.bodies[i].pos[axis[self.facing[str(dir)]]]:
+                        dangers[dir] = 1
+                else:
+                    if self.pos[axis[self.facing[str(dir)]]] - self.size == self.bodies[i].pos[axis[self.facing[str(dir)]]]:
+                        dangers[dir] = 1
+
+        return dangers
 
     def getDir(self, dir):
-        if directions[str(axis[self.facing[str(dir)]])] == direction:
+        if directions[str(dir)] == direction:
             return 1
         else:
             return 0

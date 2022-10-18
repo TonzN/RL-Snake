@@ -12,12 +12,13 @@ screen = window.screen
 
 Run = True
 
-player = snake.New(screen, sizeofwindow, 40, (sizeofwindow[0]/2, sizeofwindow[1]/2),200)
+player = snake.New(screen, sizeofwindow, 40, (sizeofwindow[0]/2, sizeofwindow[1]/2), window.Target_fps)
 scoreDisplay = ui.TextLabel(screen, 0,0, 100, 30, (255,255,255), "Score: 0", 20)
 timeDisplay = ui.TextLabel(screen, sizeofwindow[0]-100, 0, 100, 30, (255,255,255), "Time: 0", 20)
+runDisplay = ui.TextLabel(screen, sizeofwindow[0]/2-50, 0, 100, 30, (255,255,255), "Run: 0", 20)
 
 Agent = qlearn.Agent(player)
-Agent.epsilon = 0.7
+Agent.epsilon = 0.8
 count = 0
 
 while Run:
@@ -27,13 +28,20 @@ while Run:
     #player.update() 
     scoreDisplay.tT = "Score: {score}".format(score = player.score)
     timeDisplay.tT = "Time: {seconds}".format(seconds = player.Seconds)
+    runDisplay.tT = "Run: {runs}".format(runs = Agent.run_count)
     if running == False:
         count += 1
         ui.MainRenderQueue.Queue = []
-        player = snake.New(screen, sizeofwindow, 40, (sizeofwindow[0]/2, sizeofwindow[1]/2),200)
+
+        player = snake.New(screen, sizeofwindow, 40, (sizeofwindow[0]/2, sizeofwindow[1]/2), window.Target_fps)
         scoreDisplay = ui.TextLabel(screen, 0,0, 100, 30, (255,255,255), "Score: 0", 20)
         timeDisplay = ui.TextLabel(screen, sizeofwindow[0]-100, 0, 100, 30, (255,255,255), "Time: 0", 20)
+        runDisplay = ui.TextLabel(screen, sizeofwindow[0]/2-50, 0, 100, 30, (255,255,255), "Run: 0", 20)
         Agent.snake = player
-    if count == 150:
-        Agent.epsilon = 0.2
-        window.Target_fps = 15
+    if count == 10:
+        Agent.epsilon == 0.5
+    if count == 30:
+        Agent.epsilon == 0.2
+    if count == 50:
+        Agent.epsilon = 0.1
+        
