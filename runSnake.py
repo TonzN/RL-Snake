@@ -38,10 +38,13 @@ while Run:
         timeDisplay = ui.TextLabel(screen, sizeofwindow[0]-100, 0, 100, 30, (255,255,255), "Time: 0", 20)
         runDisplay = ui.TextLabel(screen, sizeofwindow[0]/2-50, 0, 100, 30, (255,255,255), "Run: 0", 20)
         Agent.snake = player
-    if count == 10:
+
+    if count == 20:
         Agent.epsilon == 0.5
-    if count == 30:
+    if count == 45:
         Agent.epsilon == 0.2
-    if count == 50:
+    if count == 90:
+        window.Target_fps = 25
         Agent.epsilon = 0.1
+        
         
