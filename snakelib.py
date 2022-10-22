@@ -161,21 +161,28 @@ class New():
         return fruitDir
 
     def lookForBorder(self):
-        dangers = [0,0,0]
-        for dir in range(3):
-            if self.pos[axis[self.facing[str(dir)]]] + self.size >= self.screenSize[axis[self.facing[str(dir)]]]:
-                dangers[dir] = 1
+        dangers = [0,0,0,0,0,0]
+        moveType = {
+            "up": -self.size,
+            "down": self.size,
+            "left": -self.size,
+            "right": self.size
+        }
+        for depth in range(1,3):
+            for dir in range(3):
+                if self.pos[axis[self.facing[str(dir)]]] + moveType[directions[self.facing[str(dir)]]]*depth >= self.screenSize[axis[self.facing[str(dir)]]]:
+                    dangers[3*(depth-1)+dir] = 1
 
-            if self.pos[axis[self.facing[str(dir)]]] - self.size <= 0-15:
-                dangers[dir] = 1
-            for i in range(1,len(self.body)):
-                if direction == "right" or direction == "down":
-                    if self.pos[axis[self.facing[str(dir)]]] + self.size == self.bodies[i].pos[axis[self.facing[str(dir)]]]:
-                        dangers[dir] = 1
-                else:
-                    if self.pos[axis[self.facing[str(dir)]]] - self.size == self.bodies[i].pos[axis[self.facing[str(dir)]]]:
-                        dangers[dir] = 1
+                if self.pos[axis[self.facing[str(dir)]]] + moveType[directions[self.facing[str(dir)]]]*depth <= 0-15:
+                    dangers[3*(depth-1)+dir] = 1
+                
 
+                for i in range(1,len(self.body)):
+                    deltaPos = list(self.pos)
+                    deltaPos[axis[self.facing[str(dir)]]] += moveType[directions[self.facing[str(dir)]]]*depth
+                    if deltaPos == self.bodies[i].pos:
+                        dangers[3*(depth-1)+dir] = 1
+        print(dangers)
         return dangers
 
     def getDir(self, dir):
