@@ -14,14 +14,16 @@ lr = 0.001
 border = -100
 apple = 5
 plrSelf = -100
+path = "savedNetworkData"
 
 memory = [
 
 ]
 
 model = tf.keras.models.Sequential([
-    tf.keras.layers.Dense(11, activation = "relu"),
-    tf.keras.layers.Dense(22, activation='relu'),   
+    tf.keras.layers.Flatten(input_shape=(1,14)),
+    tf.keras.layers.Dense(11, activation="relu"),
+    tf.keras.layers.Dense(192, activation='relu'),    
     tf.keras.layers.Dense(3, activation="relu")
 ])
 mse = tf.keras.losses.MeanSquaredError()
@@ -32,9 +34,10 @@ model.compile(optimizer='adam',
 class Agent:
     def __init__(self, snake):
         self.run_count = 0
-        self.gamma = 0.8
+        self.gamma = 0.9
         self.epsilon = 0.8
         self.snake = snake
+        self.Highscore = 0
         self.lr = 0.0000000000001
 
     def getState(self):
@@ -64,26 +67,26 @@ class Agent:
             return action, action.argmax()
         else:
             #pred = ai.feedforward(state)
-            pred = tf.nn.softmax(model(state)).numpy()
+            pred = tf.nn.softmax(model(np.array([state]))).numpy()
            # print(state)
           #  print(pred, pred.argmax())
             
             return pred, pred.argmax()
     
     def shortTrain(self, oldstate, newstate, reward, action, running):
-        pred = tf.nn.softmax(model(oldstate)).numpy()
+        pred = tf.nn.softmax(model(np.array([oldstate]))).numpy()
         target = copy.copy(pred)
         newQ = reward
         if running:
-            newQ = reward + self.gamma * np.max(tf.nn.softmax(model(newstate)))
+            newQ = reward + self.gamma * np.max(tf.nn.softmax(model(np.array([newstate]))))
         target[0][action.argmax()] = newQ
      #   print("\n TARGET VALUES", target[action.argmax()], "\n")
-        model.fit(oldstate, target, epochs = 1, verbose = 0)
+        model.fit(np.array([oldstate]), target, epochs = 1, verbose = 0)
 
-     def longTrain(self):
+    def longTrain(self):
         sample = memory
-        if len(memory) > 400:
-            sample = random.sample(memory, 400)
+        if len(memory) > 1000:
+            sample = random.sample(memory, 1000)
 
         oldstate, newstate, reward, action, running = zip(*sample)
         
@@ -91,7 +94,7 @@ class Agent:
         target = []
         arr = []
         for i in range(len(oldstate)):
-            run = tf.nn.softmax(model(oldstate[i])).numpy()
+            run = tf.nn.softmax(model(np.array([oldstate[i]]))).numpy()
             pred.append(run)
             arr.append(oldstate[i])
             target.append(copy.copy(run))
@@ -99,12 +102,24 @@ class Agent:
         for i in range(len(running)): 
             newQ = reward[i]
             if running[i]:
-                newQ = reward[i] + self.gamma * np.max(tf.nn.softmax(model(newstate[i])).numpy())
+                newQ = reward[i] + self.gamma * np.max(tf.nn.softmax(model(np.array([newstate[i]]))).numpy())
            
             target[i][0][action[i].argmax()] = newQ
       #  print(np.array(target).shape, np.array(arr).shape)
-        model.fit(np.array(arr), np.array(target), epochs = 8, verbose = 0)
+        model.fit(np.array(arr), np.array(target), epochs = 1, verbose = 0)
         model.evaluate(np.array(arr),  np.array(target), verbose=2)
+
+    def play(self, screen):
+        state = self.getState()
+        action, move = self.typeAction(state)
+        sl.direction = sl.directions[str(self.snake.facing[str(move)])]
+        self.snake.move(screen)
+        running, reward = self.snake.update()
+        if not running:
+            sl.direction = "right"
+            self.run_count += 1
+            
+        return running
 
     def train(self, screen):
         state = self.getState()
@@ -114,9 +129,6 @@ class Agent:
         running, reward = self.snake.update()
         newState = self.getState()
 
-        if reward > 0:
-           # print(reward, self.run_count, self.snake.score, self.snake.pos)
-           pass
         self.shortTrain(state, newState, reward, action, running)
 
         self.addMemory(state, newState, reward, action, running)
